@@ -2,6 +2,7 @@
 .github
 
 hs_err_*.log
+replay_pid*.log
 
 Errores_Jira_RiExport.xlsx
 front
