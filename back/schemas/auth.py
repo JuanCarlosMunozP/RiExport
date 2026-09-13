@@ -25,7 +25,6 @@ def validate_username(name:str) -> str:
 
 
 class UserBase(BaseModel):
-    id: Optional[int]
     username: str
     email:str 
     password: str

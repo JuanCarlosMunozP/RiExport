@@ -1,44 +1,65 @@
-from fastapi import APIRouter, Depends, HTTPException,status
+import logging
+
+from fastapi import APIRouter, Depends, Form, HTTPException,status
 from datetime import timedelta,datetime
 
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
-from back.schemas.auth import RefreshRequest, TokenPair, UserCreate, UserResponse
+from schemas.auth import RefreshRequest, TokenPair, UserCreate, UserResponse
 from core.security import create_access_token, create_refresh_token, decode_token, hash_password,verify_password
 from db.session import get_db
-from models import User
+from models import User, UserRole
 
 
 router = APIRouter()
 
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 @router.post("/register",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
-async def register(payload:UserCreate, db:AsyncSession = Depends(get_db)) -> User:
-    user_exists = await db.execute(
-        select(User).where((User.username == payload.username) | (User.email == payload.email))
-    )
-    if user_exists.scalar_one_or_none():
-        raise HTTPException(status_code=403,detail="Username or email already exists.")
+def register(payload:UserCreate, db:Session = Depends(get_db)) -> User:
+    user_exists = db.execute(
+        select(User).where(User.username == payload.username)
+    ).scalar_one_or_none()
+    if user_exists:
+        raise HTTPException(status_code=401,detail="Username already exists")
+
+    email_exists = db.execute(
+        select(User).where(User.email == payload.email)
+    ).scalar_one_or_none()
+    if email_exists:
+        raise HTTPException(status_code=401,detail="Email already exists")
 
     user = User(
         username=payload.username,
-        emai=payload.email,
+        email=payload.email,
         hashed_password=hash_password(payload.password),
+        role=UserRole.USER,
     )
     db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    logger.info("Registro Exitoso")
+    db.refresh(user)
     return user
 
 @router.post("/login",response_model=TokenPair)
-async def login(form_data:OAuth2PasswordRequestForm = Depends(),db:AsyncSession = Depends(get_db)) -> TokenPair:
-    result = await db.execute(select(User).where(User.username == form_data.username))
+def login(
+    username: str = Form(),
+    password: str = Form(),
+    db: Session = Depends(get_db),
+) -> TokenPair:
+    result = db.execute(select(User).where(User.username == username))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(form_data.password,user.hashed_password):
+    if not user or not verify_password(password,user.hashed_password):
         raise HTTPException(status_code=401,detail="Invalid credentials")
     if not user.is_active:
         raise HTTPException(status_code=403,detail="User is inactive")
+
+    if user.id is None:
+        raise HTTPException(status_code=500,detail="User not found")
+
+    logger.info("Inicio de Sesion exitoso")
 
     return TokenPair(
         access_token=create_access_token(user.id),
@@ -46,7 +67,7 @@ async def login(form_data:OAuth2PasswordRequestForm = Depends(),db:AsyncSession 
     )
 
 @router.post("/refresh",response_model=TokenPair)
-async def refresh(payload:RefreshRequest) -> TokenPair:
+def refresh(payload:RefreshRequest) -> TokenPair:
 
     try:
         claims = decode_token(payload.refresh_token)

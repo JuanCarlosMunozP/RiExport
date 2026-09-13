@@ -1,6 +1,11 @@
 FROM python:3.12-slim AS base
 
-WORKDIR /src
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONNUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
 
 COPY requirements/ ./requirements
 
@@ -10,8 +15,6 @@ RUN pip install --upgrade pip && \
     pip install -r requirements/${REQUIREMENTS}.txt
 
 COPY . .
-
-ENV PYTHONPATH=/src
 
 EXPOSE 8081
 

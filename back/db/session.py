@@ -17,8 +17,6 @@ Base = declarative_base()
 
 SessionLocal = sessionmaker(autocommit=False,autoflush=False,bind=engine)
 
-Base.metadata.create_all(bind=engine)
-
 def get_db():
 
     db = SessionLocal()
@@ -29,11 +27,12 @@ def get_db():
     try:
         yield db
         print("Conexion a la base de datos exitosa")
-    finally:
-        print("Conexion finalizada")
-        db.close()
+    except Exception as e:
+        print(f"Error al conectar a la base de datos: {e}")
+        raise
 
-def create_tables_if_not_exist():
+def create_tables_if_not_exists():
     from models.user import User
+    User.metadata.create_all(engine)
 
-    Base.metadata.create_all(bind=engine)
+create_tables_if_not_exists()
