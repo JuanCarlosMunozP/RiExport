@@ -1,0 +1,8 @@
+.vscode/
+.github
+
+hs_err_*.log
+
+Errores_Jira_RiExport.xlsx
+front
+front/*

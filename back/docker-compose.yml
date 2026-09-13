@@ -1,0 +1,36 @@
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: riexport_db
+    environment:
+       POSTGRES_DB: ${POSTGRES_DB:-RiDB}
+       POSTGRES_USER: ${POSTGRES_USER:-RiUser}
+       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-RiPass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-RiUser} -d ${POSTGRES_DB:-RiDB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+       
+  web:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: riexport_api
+    ports: 
+     - "8081:8081"
+    volumes:
+      - .:/src
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://RiUser:RiPass@db:5432/RiDB
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
