@@ -1,4 +1,5 @@
-from datetime import datetime,timedelta
+from datetime import datetime,timedelta, timezone
+from typing import Any
 
 from dotenv import load_dotenv
 from passlib.context import CryptContext
@@ -7,59 +8,36 @@ from jose import JWTError,jwt
 
 import os
 
-from schemas.token import TokenData
+from back.core.config import Settings
 
 load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"],deprecated="auto")
-SECRET_KEY = os.getenv("SECRET_KEY", "")
-ALGORITHM = os.getenv("ALGORIHTM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
-def verify_password(plain_password,hashed_password):
-    return pwd_context.verify(plain_password,hashed_password)
+def hash_password(plain:str) -> str:
+    return pwd_context.hash(plain)
 
-def get_password_hash(password):
+def verify_password(plain:str,hashed:str) -> bool:
+    return pwd_context.verify(plain,hashed)
 
-    return pwd_context.hash(password)
 
-def create_access_token(data:dict):
+ALGORITHM = "HS256"
 
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp":expire})
-    encoded_jwt = jwt.encode(to_encode,SECRET_KEY,algorithm=ALGORITHM)
-    return encoded_jwt
+def create_access_token(subject: str | int, expires_delta:timedelta | None = None) -> str:
 
-def verify_token(token:str,credentials_exception):
+    expire = datetime.now(tz=timezone.utc) + (
+        expires_delta or timedelta(minutes=Settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    payload = {"sub":str(subject), "exp":expire,"type":"access"}
+    return jwt.encode(payload,Settings.SECRET_KEY, algorithm=ALGORITHM)
+
+def create_refresh_token(subject:str | int) -> str:
+    expire = datetime.now(tz=timezone.utc) + timedelta(Settings.REFRESH_TOKEN_EXPIRE_MINTES)
+    payload = {"sub":str(subject),"exp":expire,"type":"refresh"}
+    return jwt.encode(payload,Settings.SECRET_KEY,algorithm=ALGORITHM)
+
+def decode_token(token:str) -> dict[str,Any]:
     try:
-        payload = jwt.decode(token,"SECRET_KEY",algorithms=[ALGORITHM])
-        email: str = payload.get("sub", "")
-        if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
-        return token_data
-    except JWTError:
-        raise credentials_exception
-
-
-def create_password_reset_token(email:str) -> str:
-    expire = datetime.utcnow()
-    data = {
-        "sub":email,
-        "type":"password_reset",
-        "exp":expire
-    }
-
-    return create_access_token(data)
-
-def verify_password_reset_token(token:str) -> str | None:
-    try:
-        payload = jwt.decode(token,SECRET_KEY,algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        token_type = payload.get("type")
-        if email is None or token_type != "password_reset":
-            return None
-        return email
-    except JWTError:
-        return None
+        return jwt.decode(token,Settings.SECRET_KEY,algorithms=[ALGORITHM])
+    except JWTError as e:
+        raise ValueError(f"Invalid Token {e}") from e

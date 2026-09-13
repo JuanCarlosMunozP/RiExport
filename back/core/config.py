@@ -21,8 +21,8 @@ class Settings(BaseModel):
     if not SECRET_KEY:
         print("Not found secrety key")
         
-    ALGORITHM: str = os.getenv("ALGORITHM","HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES","30"))
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    REFRESH_TOKEN_EXPIRE_MINTES = 17
 
     class Config:
         case_sensitive = True

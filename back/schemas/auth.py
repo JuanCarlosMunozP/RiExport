@@ -15,7 +15,7 @@ def validate_password(password:str) -> str:
     return password
 
 
-def validate_name(name:str) -> str:
+def validate_username(name:str) -> str:
 
     if re.search(r"\d",name):
         raise ValueError("Name can't contain numbers")
@@ -26,7 +26,7 @@ def validate_name(name:str) -> str:
 
 class UserBase(BaseModel):
     id: Optional[int]
-    name: str
+    username: str
     email:str 
     password: str
     role:Enum
@@ -43,7 +43,7 @@ class UserBase(BaseModel):
             raise ValueError("Invalid email format")
 
 class UserCreate(UserBase):
-    name: str
+    username: str
     email:str
     password:str
     role: str
@@ -56,7 +56,7 @@ class UserCreate(UserBase):
 
 class UserResponse(BaseModel):
     welcome_message: str | None = None
-    name: str
+    username: str
     email:str
     id:int
 
@@ -65,8 +65,17 @@ class UserResponse(BaseModel):
 
 
 class User(UserResponse):
-    name:str
+    username:str
 
     class Config:
         from_attributes = True
+
+
+class TokenPair(BaseModel):
+    access_token:str
+    refresh_token:str
+    token_type: str = "bearer"
+
+class RefreshRequest(BaseModel):
+    refresh_token:str
 

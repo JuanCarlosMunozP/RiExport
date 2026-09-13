@@ -36,9 +36,10 @@ app.add_middleware(
 
 app.include_router(
     auth.router,
-    prefix="/api",
+    prefix="/auth",
     tags=["authentication"]
 )
+
 
 @app.get("/")
 async def root():

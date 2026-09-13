@@ -1,126 +1,64 @@
+from fastapi import APIRouter, Depends, HTTPException,status
 from datetime import timedelta,datetime
 
-from fastapi import APIRouter, Depends, HTTPException,status
-from sqlalchemy import exists
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import create_access_token, create_password_reset_token, get_password_hash, verify_password, verify_password_reset_token
+from back.schemas.auth import RefreshRequest, TokenPair, UserCreate, UserResponse
+from core.security import create_access_token, create_refresh_token, decode_token, hash_password,verify_password
 from db.session import get_db
-from sqlalchemy.orm import Session
 from models import User
-from schemas.token import ForgotPasswordRequest, LoginRequest, PasswordResetResponse, PasswordResetSuccessResponse, ResetPasswordRequest, Token
-from schemas.user import UserCreate, UserResponse
 
 
 router = APIRouter()
 
-@router.post("/signup",response_model=UserResponse)
-def signup(user:UserCreate, db:Session = Depends(get_db)):
+@router.post("/register",response_model=UserResponse,status_code=status.HTTP_201_CREATED)
+async def register(payload:UserCreate, db:AsyncSession = Depends(get_db)) -> User:
+    user_exists = await db.execute(
+        select(User).where((User.username == payload.username) | (User.email == payload.email))
+    )
+    if user_exists.scalar_one_or_none():
+        raise HTTPException(status_code=403,detail="Username or email already exists.")
 
-    db_user = db.query(User).filter(User.email == user.email).first()
+    user = User(
+        username=payload.username,
+        emai=payload.email,
+        hashed_password=hash_password(payload.password),
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
 
+@router.post("/login",response_model=TokenPair)
+async def login(form_data:OAuth2PasswordRequestForm = Depends(),db:AsyncSession = Depends(get_db)) -> TokenPair:
+    result = await db.execute(select(User).where(User.username == form_data.username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(form_data.password,user.hashed_password):
+        raise HTTPException(status_code=401,detail="Invalid credentials")
+    if not user.is_active:
+        raise HTTPException(status_code=403,detail="User is inactive")
 
-    if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-    else:
-        print("Usuario creado exitosamente")
-
-    hashed_password = get_password_hash(user.password)
-
-    if not user.password:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN
-        )
-
-  
-    db_user = User(
-        email=user.email,
-        name=user.name,
-        password=hashed_password
+    return TokenPair(
+        access_token=create_access_token(user.id),
+        refresh_token=create_refresh_token(user.id)
     )
 
-    db.add(user)
-    db.commit()
-    db.refresh(db_user)
-
-    setattr(db_user,"welcome_message",f"Welcome to the platform, {db_user.name}!")
-
-@router.post("/login",response_model=Token)
-async def login(login_data:LoginRequest,db:Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == login_data.email).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
-
-    if not verify_password(login_data.password,user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
-        )
-
-    
-    return {
-        "message":"Login successfully",
-        "welcome_message":f"Welcome back, {user.name}",
-        "token_type":"bearer"
-    }
-
-@router.post("/forgot-password",response_model=PasswordResetResponse)
-def forgot_password(request:ForgotPasswordRequest, db:Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == request.email).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No user found with this email address",
-        )
-
-    reset_token = create_password_reset_token(user.email)
-
-    user.reset_token = reset_token 
-    user.reset_token_expires = datetime.utcnow()
-    db.commit()
-
-    return {
-        "message":f"Password reset token has been generated and sent to {user.email}",
-    }
-
-@router.post("/reset-password",response_model=PasswordResetSuccessResponse)
-def reset_password(request: ResetPasswordRequest,db:Session = Depends(get_db)):
+@router.post("/refresh",response_model=TokenPair)
+async def refresh(payload:RefreshRequest) -> TokenPair:
 
     try:
-        email = verify_password_reset_token(request.token)
-        if not email:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset token"
-            )
+        claims = decode_token(payload.refresh_token)
+    except ValueError as e:
+        raise HTTPException(status_code=401,detail=str(e)) from e
 
-        user = db.query(User).filter(
-            User.email == email,
-            User.reset_token == request.token,
-            User.reset_token_expires > datetime.utcnow()
-        ).first()
+    if claims.get("type") != "refresh":
+        raise HTTPException(status_code=401,detail="Wrong token type")
 
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired reset token"
-            )
+    user_id = claims["sub"]
 
-        user.password = get_password_hash(request.new_password)
-        user.reset_token = None
-        user.reset_token_expires = None
-
-        db.commit()
-        return PasswordResetSuccessResponse(message="Password has been sucessfully reset")
-
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An error ocurred while resetting password"
-        ) from e
+    return TokenPair(
+        access_token=create_access_token(user_id),
+        refresh_token=create_refresh_token(user_id),
+    )
