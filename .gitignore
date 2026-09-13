@@ -7,3 +7,5 @@ replay_pid*.log
 Errores_Jira_RiExport.xlsx
 front
 front/*
+
+__pycache__/*
