@@ -35,10 +35,14 @@ class UserBase(BaseModel):
         if any(c.isupper() for c in v):
             raise ValueError("Email must be in lowercase letters only")
         try:
-            validate_email(v)
+            validate_email(v, check_deliverability=False)
             return v
-        
-        except EmailNotValidError:
+        except EmailNotValidError as e:
+            # email-validator 2.x rejects .local even without DNS
+            if "special-use or reserved" in str(e).lower() and "@" in v:
+                local_part, _, domain = v.partition("@")
+                if local_part and "." in domain:
+                    return v
             raise ValueError("Invalid email format")
 
 class UserCreate(UserBase):
