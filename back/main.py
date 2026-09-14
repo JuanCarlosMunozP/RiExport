@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 
 from api import auth
+from back.api import product
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://10.0.2.2:8081"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,4 +37,10 @@ app.include_router(
     auth.router,
     prefix="/auth",
     tags=["authentication"]
+)
+
+app.include_router(
+    product.router,
+    prefix="/products",
+    tags=["products"]
 )

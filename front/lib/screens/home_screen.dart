@@ -22,7 +22,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var user = Provider.of<UserProvider>(context,listen:false).user;
+    final user = context.watch<UserProvider>().user;
     
     if (user == null) {
       return const Center(child:CircularProgressIndicator());

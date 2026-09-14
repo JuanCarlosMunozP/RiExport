@@ -9,7 +9,7 @@ import 'package:provider/provider.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    ChangeNotifierProvider(
+    ChangeNotifierProvider<UserProvider>(
       create: (context) => UserProvider(),
       child: const MyApp(),
     ),
