@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/api/api_client.dart';
+import '../core/config/api_config.dart';
 import 'state/app_preferences.dart';
 
 class RiExportApp extends StatelessWidget {
@@ -8,8 +10,14 @@ class RiExportApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppPreferences(),
+    return MultiProvider(
+      providers: [
+        Provider<ApiClient>(
+          create: (_) => ApiClient(config: ApiConfig()),
+          dispose: (_, client) => client.close(),
+        ),
+        ChangeNotifierProvider(create: (_) => AppPreferences()),
+      ],
       child: const _RiExportView(),
     );
   }
