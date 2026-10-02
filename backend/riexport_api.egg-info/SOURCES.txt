@@ -12,8 +12,10 @@ auth/schemas.py
 auth/service.py
 core/__init__.py
 core/config.py
+core/cors.py
 core/errors.py
 core/logging.py
+core/responses.py
 core/security.py
 customers/__init__.py
 customers/models.py

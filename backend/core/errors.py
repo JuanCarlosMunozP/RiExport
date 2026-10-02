@@ -184,7 +184,7 @@ def request_id_middleware(app: FastAPI) -> None:
         request.state.request_id = request_id
         try:
             response = await call_next(request)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - normalize unhandled API failures
             response = await _handle_unexpected_error(request, exc)
         response.headers["X-Request-ID"] = request_id
         return response

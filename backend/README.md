@@ -7,10 +7,11 @@ Backend FastAPI para la plataforma RiExport. La documentación funcional y de ar
 ```powershell
 py -3.12 -m venv venv
 .\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e .
+uv sync --locked --active --all-groups
 Copy-Item .env.example .env
 ```
+
+El archivo `.python-version` fija el intérprete de referencia y `uv.lock` fija las versiones directas y transitivas. Instala `uv` una vez en el equipo antes de sincronizar. Usa `uv lock` solo cuando cambien las dependencias; revisa y conserva el `uv.lock` actualizado junto con `pyproject.toml`.
 
 Copia `.env.example` como `.env` y define las variables adecuadas para el entorno. `.env` no se versiona.
 

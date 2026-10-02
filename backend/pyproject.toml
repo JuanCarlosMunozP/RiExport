@@ -19,6 +19,12 @@ dependencies = [
     "uvicorn[standard]>=0.54,<1",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3,<10",
+    "ruff>=0.13,<1",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = [
