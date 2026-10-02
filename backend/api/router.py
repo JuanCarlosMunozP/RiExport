@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from sqlalchemy import text
 
 from auth.router import router as auth_router
 from core.config import settings
+from core.errors import APIError
 from customers.router import router as customers_router
 from database.session import get_engine
 from documents.router import router as documents_router
@@ -35,7 +36,11 @@ def readiness() -> dict[str, str]:
         with get_engine().connect() as connection:
             connection.execute(text("SELECT 1"))
     except Exception as exc:
-        raise HTTPException(status_code=503, detail="Database is not ready") from exc
+        raise APIError(
+            status_code=503,
+            code="SERVICE_UNAVAILABLE",
+            message="El servicio no está disponible temporalmente.",
+        ) from exc
     return {"status": "ready"}
 
 

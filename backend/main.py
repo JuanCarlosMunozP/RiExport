@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from api.router import router
 from core.config import settings
+from core.errors import install_exception_handlers, request_id_middleware
 from core.logging import configure_logging
 
 configure_logging(settings.log_level)
@@ -15,3 +16,5 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.api_docs_enabled else None,
 )
 app.include_router(router)
+install_exception_handlers(app)
+request_id_middleware(app)
