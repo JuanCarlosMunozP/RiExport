@@ -23,7 +23,7 @@ Para ejecutar con otro perfil en PowerShell, establece `APP_ENV` antes de inicia
 
 ```powershell
 $env:APP_ENV = "testing"
-uvicorn main:app
+.\run.ps1
 ```
 
 ## Ejecutar
@@ -31,10 +31,10 @@ uvicorn main:app
 Desde `D:\riexport\backend`:
 
 ```powershell
-uvicorn main:app --reload
+.\run.ps1
 ```
 
-En `development` y `testing`, OpenAPI/Swagger estará en `http://127.0.0.1:8000/docs`; en `production` la documentación interactiva y el esquema OpenAPI quedan deshabilitados. El estado de vida está en `/health/live` y la disponibilidad de base de datos en `/health/ready`.
+El backend usa siempre el puerto `8001`: OpenAPI/Swagger está en `http://127.0.0.1:8001/docs` en `development` y `testing`; en `production` la documentación interactiva y el esquema OpenAPI quedan deshabilitados. El estado de vida está en `/health/live` y la disponibilidad de base de datos en `/health/ready`.
 
 Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen operaciones de negocio. Los modelos, servicios y repositorios se implementarán por actividad siguiendo el contrato REST documentado.
 
