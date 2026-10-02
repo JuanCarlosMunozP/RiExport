@@ -16,6 +16,8 @@ Copia `.env.example` como `.env` y define las variables adecuadas para el entorn
 
 `APP_ENV` acepta `development`, `testing` o `production`. En desarrollo se activa el modo debug; Swagger y ReDoc solo se habilitan fuera de producción. El nivel de logs se controla con `LOG_LEVEL`. Configura `DATABASE_URL` con el formato `postgresql+psycopg://usuario:clave@host:5432/base`. SQLAlchemy usa conexiones síncronas con `psycopg`, comprobación de conexiones del pool y sesiones por petición. `/health/ready` comprueba que PostgreSQL acepte una consulta; no crea la base ni sus tablas.
 
+Para Flutter Web, `CORS_ORIGINS` es una lista de orígenes separados por coma, sin rutas, por ejemplo `https://app.example.com`. En desarrollo se aceptan automáticamente orígenes HTTP/HTTPS de `localhost` y `127.0.0.1` en cualquier puerto; producción no usa esa excepción. Las peticiones Bearer no necesitan cookies, por lo que `CORS_ALLOW_CREDENTIALS` queda desactivado por defecto. Flutter para Android/iOS no aplica CORS.
+
 Para ejecutar con otro perfil en PowerShell, establece `APP_ENV` antes de iniciar:
 
 ```powershell

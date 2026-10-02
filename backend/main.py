@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from api.router import router
 from core.config import settings
+from core.cors import configure_cors
 from core.errors import install_exception_handlers, request_id_middleware
 from core.logging import configure_logging
 
@@ -17,4 +18,5 @@ app = FastAPI(
 )
 app.include_router(router)
 install_exception_handlers(app)
+configure_cors(app, settings)
 request_id_middleware(app)

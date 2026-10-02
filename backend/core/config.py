@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     app_env: Literal["development", "testing", "production"] = "development"
     api_v1_prefix: str = "/api/v1"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    cors_origins: str = ""
+    cors_allow_credentials: bool = False
     database_url: SecretStr | None = None
 
     @property
@@ -27,6 +29,16 @@ class Settings(BaseSettings):
     @property
     def api_docs_enabled(self) -> bool:
         return self.app_env != "production"
+
+    @property
+    def cors_allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    @property
+    def cors_origin_regex(self) -> str | None:
+        if self.app_env == "development":
+            return r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
+        return None
 
 
 @lru_cache
