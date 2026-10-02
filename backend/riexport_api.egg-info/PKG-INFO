@@ -1,0 +1,42 @@
+Metadata-Version: 2.4
+Name: riexport-api
+Version: 0.1.0
+Summary: API para la plataforma RiExport
+Requires-Python: <3.13,>=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: alembic<2,>=1.20
+Requires-Dist: bcrypt<6,>=5
+Requires-Dist: fastapi<1,>=0.141
+Requires-Dist: psycopg[binary]<4,>=3.3
+Requires-Dist: pydantic-settings<3,>=2.15
+Requires-Dist: PyJWT<3,>=2.15
+Requires-Dist: SQLAlchemy<3,>=2.1
+Requires-Dist: uvicorn[standard]<1,>=0.54
+
+# RiExport API
+
+Backend FastAPI para la plataforma RiExport. La documentación funcional y de arquitectura vive en el proyecto de documentación `D:\plataforma_exportacion_cafe_cacao\docs`.
+
+## Preparar el entorno (PowerShell)
+
+```powershell
+py -3.12 -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
+Copy-Item .env.example .env
+```
+
+Configura `DATABASE_URL` en `.env` con una base PostgreSQL local antes de usar `/health/ready` o implementar módulos que acceden a datos.
+
+## Ejecutar
+
+Desde `D:\riexport\backend`:
+
+```powershell
+uvicorn main:app --reload
+```
+
+OpenAPI/Swagger estará en `http://127.0.0.1:8000/docs`; el estado de vida en `/health/live` y la disponibilidad de base de datos en `/health/ready`.
+
+Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen operaciones de negocio. Los modelos, servicios y repositorios se implementarán por actividad siguiendo el contrato REST documentado.

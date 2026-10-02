@@ -1,0 +1,1 @@
+"""Supplier administration module."""
