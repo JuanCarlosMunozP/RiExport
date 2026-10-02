@@ -34,3 +34,14 @@ uvicorn main:app --reload
 En `development` y `testing`, OpenAPI/Swagger estará en `http://127.0.0.1:8000/docs`; en `production` la documentación interactiva y el esquema OpenAPI quedan deshabilitados. El estado de vida está en `/health/live` y la disponibilidad de base de datos en `/health/ready`.
 
 Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen operaciones de negocio. Los modelos, servicios y repositorios se implementarán por actividad siguiendo el contrato REST documentado.
+
+## Versionado de base de datos
+
+Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa los módulos `models.py` del dominio para detectar entidades al autogenerar revisiones. Cuando existan modelos ORM:
+
+```powershell
+alembic revision --autogenerate -m "descripcion_del_cambio"
+alembic upgrade head
+```
+
+Consulta la revisión aplicada con `alembic current`, el historial con `alembic history` y revierte una revisión con `alembic downgrade -1`. Revisa siempre la migración generada antes de aplicarla. Todavía no hay revisiones porque el modelo ORM aún no está implementado.
