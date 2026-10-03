@@ -40,11 +40,11 @@ Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen op
 
 ## Versionado de base de datos
 
-Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa los módulos `models.py` del dominio para detectar entidades al autogenerar revisiones. Cuando existan modelos ORM:
+Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa `database.models`, el registro de todos los modelos ORM de dominio, para detectar entidades al autogenerar revisiones:
 
 ```powershell
 alembic revision --autogenerate -m "descripcion_del_cambio"
 alembic upgrade head
 ```
 
-Consulta la revisión aplicada con `alembic current`, el historial con `alembic history` y revierte una revisión con `alembic downgrade -1`. Revisa siempre la migración generada antes de aplicarla. Todavía no hay revisiones porque el modelo ORM aún no está implementado.
+Consulta la revisión aplicada con `alembic current`, el historial con `alembic history` y revierte una revisión con `alembic downgrade -1`. Revisa siempre la migración generada antes de aplicarla. El modelo ORM inicial refleja `docs/modelo-datos.md`; las reglas transaccionales que cruzan varias tablas permanecen en servicios y no se simulan como constraints simples.

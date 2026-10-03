@@ -1,9 +1,9 @@
-from importlib import import_module
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+import database.models  # noqa: F401
 from core.config import settings
 from database.base import Base
 
@@ -15,25 +15,6 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
-
-for module_name in (
-    "audit",
-    "customers",
-    "documents",
-    "exports",
-    "farms",
-    "inventory",
-    "jobs",
-    "logistics",
-    "notifications",
-    "orders",
-    "payments",
-    "products",
-    "roles",
-    "suppliers",
-    "users",
-):
-    import_module(f"{module_name}.models")
 
 target_metadata = Base.metadata
 
@@ -84,9 +65,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
