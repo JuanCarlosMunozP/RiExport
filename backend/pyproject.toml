@@ -32,5 +32,5 @@ include = [
     "audit*", "auth*", "customers*", "documents*", "exports*",
     "farms*", "inventory*", "jobs*", "logistics*", "notifications*",
     "orders*", "payments*", "products*", "reports*", "roles*",
-    "suppliers*", "users*",
+    "suppliers*", "users*", "scripts*",
 ]

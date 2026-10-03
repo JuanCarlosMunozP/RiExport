@@ -48,3 +48,18 @@ alembic upgrade head
 ```
 
 Consulta la revisión aplicada con `alembic current`, el historial con `alembic history` y revierte una revisión con `alembic downgrade -1`. Revisa siempre la migración generada antes de aplicarla. El modelo ORM inicial refleja `docs/modelo-datos.md`; las reglas transaccionales que cruzan varias tablas permanecen en servicios y no se simulan como constraints simples.
+
+## Datos semilla
+
+El script `scripts.seed_data` inserta las unidades `kg` y `t` y las
+certificaciones base descritas en los requerimientos. Puede ejecutarse más de
+una vez: inserta únicamente claves que todavía no existan y conserva los
+valores ya presentes.
+
+```powershell
+.\venv\Scripts\python.exe -m scripts.seed_data
+```
+
+El script requiere `DATABASE_URL` y no crea usuarios ni roles. La matriz de
+permisos, los países, las monedas y los nombres definitivos de roles aún deben
+aprobarse antes de añadirlos a esta semilla.
