@@ -38,6 +38,14 @@ El backend usa siempre el puerto `8001`: OpenAPI/Swagger está en `http://127.0.
 
 Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen operaciones de negocio. Los modelos, servicios y repositorios se implementarán por actividad siguiendo el contrato REST documentado.
 
+## Hash de contraseñas
+
+`core.security.hash_password` genera hashes bcrypt con salt aleatorio y costo
+12; `verify_password` compara credenciales sin revelar hashes inválidos. Las
+contraseñas se limitan a 72 bytes UTF-8, el máximo admitido por bcrypt, y se
+rechazan bytes nulos. Estas funciones no implican que el login o la gestión de
+sesiones estén implementados.
+
 ## Versionado de base de datos
 
 Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa `database.models`, el registro de todos los modelos ORM de dominio, para detectar entidades al autogenerar revisiones:
