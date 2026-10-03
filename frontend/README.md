@@ -54,6 +54,8 @@ La navegación declarativa con `go_router` está centralizada en
 ausente o vencida abre `/login`; rutas desconocidas muestran una página 404.
 Desde Inicio se accede a `/users` para consultar, buscar y paginar usuarios
 (permiso `users.read`) y a `/users/new` para registrarlos (permiso
-`users.create`). Hasta que esté disponible la consulta de roles, el formulario
-de alta recibe el ID de un rol activo. El enrutador sincroniza la ubicación web
-con la URL y permite abrir rutas directamente.
+`users.create`). La edición se abre en `/users/:userId/edit` desde las acciones
+del listado y requiere `users.update`; la desactivación requiere
+`users.deactivate`. Hasta que esté disponible la consulta de roles, los
+formularios reciben el ID de un rol activo. El enrutador sincroniza la ubicación
+web con la URL y permite abrir rutas directamente.

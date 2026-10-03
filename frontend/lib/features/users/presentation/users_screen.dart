@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
-import 'user_edit_dialog.dart';
 
 typedef LoadUsers =
     Future<Object?> Function({
@@ -18,14 +17,13 @@ class UsersScreen extends StatefulWidget {
   const UsersScreen({
     super.key,
     required this.loadUsers,
-    this.updateUser,
     this.deactivateUser,
+    this.editUser,
   });
 
   final LoadUsers loadUsers;
-  final Future<void> Function(int userId, Map<String, Object?> changes)?
-  updateUser;
   final Future<void> Function(int userId)? deactivateUser;
+  final Future<bool> Function(Map<String, dynamic> user)? editUser;
 
   @override
   State<UsersScreen> createState() => _UsersScreenState();
@@ -290,14 +288,16 @@ class _UsersScreenState extends State<UsersScreen> {
   );
 
   Future<void> _editUser(Map<String, dynamic> user) async {
-    final update = widget.updateUser;
     final userId = user['id'];
-    if (update == null || userId is! int) return;
-    final saved = await showUserEditDialog(
-      context,
-      user: user,
-      onSave: (changes) => update(userId, changes),
-    );
+    if (userId is! int) return;
+    final bool saved;
+    if (widget.editUser != null) {
+      saved = await widget.editUser!(user);
+    } else {
+      final router = GoRouter.of(context);
+      saved =
+          await router.push<bool>('/users/$userId/edit', extra: user) ?? false;
+    }
     if (!mounted || !saved) return;
     await _loadUsers();
     if (mounted) {

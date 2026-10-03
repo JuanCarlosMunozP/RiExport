@@ -79,6 +79,7 @@ void main() {
     tester,
   ) async {
     Map<String, Object?>? updated;
+    var editCalls = 0;
     var active = true;
     var deactivationCalls = 0;
     await tester.pumpWidget(
@@ -89,9 +90,11 @@ void main() {
                   _page([
                     _user(5, 'ana@example.com', isActive: active),
                   ], total: 1),
-          updateUser: (userId, changes) async {
-            expect(userId, 5);
-            updated = changes;
+          editUser: (user) async {
+            expect(user['id'], 5);
+            editCalls++;
+            updated = {'first_name': 'Ana María'};
+            return true;
           },
           deactivateUser: (userId) async {
             expect(userId, 5);
@@ -107,9 +110,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Editar'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).first, 'Ana María');
-    await tester.tap(find.text('Guardar'));
-    await tester.pumpAndSettle();
+    expect(editCalls, 1);
     expect(updated?['first_name'], 'Ana María');
 
     await tester.tap(find.byTooltip('Acciones del usuario'));

@@ -6,6 +6,7 @@ import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/state/auth_session.dart';
 import '../../features/users/presentation/user_registration_screen.dart';
+import '../../features/users/presentation/user_edit_screen.dart';
 import '../../features/users/presentation/users_screen.dart';
 
 abstract final class AppRoutes {
@@ -51,12 +52,6 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
         path: AppRoutes.users,
         name: 'users',
         builder: (context, _) => UsersScreen(
-          updateUser: (userId, changes) async {
-            await context.read<ApiClient>().patch(
-              '/users/$userId',
-              body: changes,
-            );
-          },
           deactivateUser: (userId) async {
             await context.read<ApiClient>().patch('/users/$userId/deactivate');
           },
@@ -73,6 +68,29 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
             );
           },
         ),
+      ),
+      GoRoute(
+        path: '${AppRoutes.users}/:userId/edit',
+        name: 'user-edit',
+        builder: (context, state) {
+          final userId = int.tryParse(state.pathParameters['userId'] ?? '');
+          final extra = state.extra;
+          if (userId == null || extra is! Map<String, dynamic>) {
+            return const _RoutePlaceholder(
+              title: 'Usuario no disponible',
+              message: 'Abre la edición desde el listado de usuarios.',
+            );
+          }
+          return UserEditScreen(
+            user: extra,
+            onSave: (changes) async {
+              await context.read<ApiClient>().patch(
+                '/users/$userId',
+                body: changes,
+              );
+            },
+          );
+        },
       ),
     ],
     errorBuilder: (_, state) => _RoutePlaceholder(
