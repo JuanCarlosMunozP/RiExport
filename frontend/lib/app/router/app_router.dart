@@ -6,11 +6,13 @@ import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/state/auth_session.dart';
 import '../../features/users/presentation/user_registration_screen.dart';
+import '../../features/users/presentation/users_screen.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
   static const login = '/login';
   static const userRegistration = '/users/new';
+  static const users = '/users';
 }
 
 GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
@@ -42,6 +44,24 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
         builder: (context, _) => UserRegistrationScreen(
           onRegister: (request) async {
             await context.read<ApiClient>().post('/users', body: request);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.users,
+        name: 'users',
+        builder: (context, _) => UsersScreen(
+          loadUsers: ({required limit, required offset, query, isActive}) {
+            final parameters = <String, String>{
+              'limit': '$limit',
+              'offset': '$offset',
+            };
+            if (query != null) parameters['q'] = query;
+            if (isActive != null) parameters['is_active'] = '$isActive';
+            return context.read<ApiClient>().get(
+              '/users',
+              queryParameters: parameters,
+            );
           },
         ),
       ),
@@ -128,6 +148,12 @@ class _HomePlaceholderState extends State<_HomePlaceholder> {
             onPressed: () => context.go(AppRoutes.userRegistration),
             icon: const Icon(Icons.person_add_alt_1_rounded),
             label: const Text('Registrar usuario'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => context.go(AppRoutes.users),
+            icon: const Icon(Icons.manage_search_rounded),
+            label: const Text('Consultar usuarios'),
           ),
         ],
       ),

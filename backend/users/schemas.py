@@ -4,6 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from core.responses import PaginatedResponse
 from core.security import BCRYPT_MAX_PASSWORD_BYTES
 
 
@@ -59,3 +60,6 @@ class UserResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+UserListResponse = PaginatedResponse[UserResponse]

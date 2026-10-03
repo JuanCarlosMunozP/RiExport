@@ -52,7 +52,8 @@ desde este dispositivo, y el backend conserva la validación de expiración.
 La navegación declarativa con `go_router` está centralizada en
 `lib/app/router/app_router.dart`. Una sesión restaurada abre `/` y una sesión
 ausente o vencida abre `/login`; rutas desconocidas muestran una página 404.
-Desde Inicio se accede a `/users/new`, que envía los datos a `POST /users` y
-requiere el permiso `users.create`. Hasta que esté disponible la consulta de
-roles, el formulario recibe el ID de un rol activo. El enrutador sincroniza la
-ubicación web con la URL y permite abrir rutas directamente.
+Desde Inicio se accede a `/users` para consultar, buscar y paginar usuarios
+(permiso `users.read`) y a `/users/new` para registrarlos (permiso
+`users.create`). Hasta que esté disponible la consulta de roles, el formulario
+de alta recibe el ID de un rol activo. El enrutador sincroniza la ubicación web
+con la URL y permite abrir rutas directamente.

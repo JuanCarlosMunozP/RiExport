@@ -4,10 +4,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from core.errors import APIError
+from core.responses import PaginatedResponse
 from core.security import hash_password
 from users import repository
 from users.models import AppUser
-from users.schemas import CreateUserRequest
+from users.schemas import CreateUserRequest, UserResponse
 
 
 def create_user(session: Session, request: CreateUserRequest) -> AppUser:
@@ -58,6 +59,30 @@ def create_user(session: Session, request: CreateUserRequest) -> AppUser:
             ],
         ) from None
     return user
+
+
+def list_users(
+    session: Session,
+    *,
+    query: str | None,
+    role_id: int | None,
+    is_active: bool | None,
+    limit: int,
+    offset: int,
+) -> PaginatedResponse[UserResponse]:
+    normalized_query = query.strip() if query and query.strip() else None
+    users, total = repository.list_users(
+        session,
+        query=normalized_query,
+        role_id=role_id,
+        is_active=is_active,
+        limit=limit,
+        offset=offset,
+    )
+    return PaginatedResponse[UserResponse](
+        items=[UserResponse.model_validate(user) for user in users],
+        pagination={"limit": limit, "offset": offset, "total": total},
+    )
 
 
 def _duplicate_email_error() -> APIError:
