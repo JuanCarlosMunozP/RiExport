@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database.base import Base
@@ -39,7 +39,7 @@ class Notification(IdMixin, Base):
     body: Mapped[str] = mapped_column(String(500), nullable=False)
     dedupe_key: Mapped[str | None] = mapped_column(String(180), unique=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default="now()", nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     recipient: Mapped["AppUser"] = relationship()

@@ -23,5 +23,5 @@ class AuditLog(IdMixin, Base):
         "metadata", JSONB, server_default=func.jsonb_build_object(), nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default="now()", nullable=False
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
