@@ -22,12 +22,13 @@ void main() {
       Provider.of<ApiClient>(context, listen: false).config.baseUri.toString(),
       'http://127.0.0.1:8001/api/v1',
     );
-    expect(find.text('Inicio'), findsNWidgets(2));
+    expect(find.text('Bienvenido'), findsOneWidget);
+    expect(find.text('Correo electrónico'), findsOneWidget);
 
     final scaffoldContext = tester.element(find.byType(Scaffold));
-    GoRouter.of(scaffoldContext).go(AppRoutes.login);
+    GoRouter.of(scaffoldContext).go(AppRoutes.home);
     await tester.pumpAndSettle();
-    expect(find.text('Iniciar sesión'), findsNWidgets(2));
+    expect(find.text('Inicio'), findsNWidgets(2));
     Provider.of<AppPreferences>(
       context,
       listen: false,

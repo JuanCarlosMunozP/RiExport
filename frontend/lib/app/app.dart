@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/api/api_client.dart';
 import '../core/config/api_config.dart';
+import '../features/auth/state/auth_session.dart';
 import 'router/app_router.dart';
 import 'state/app_preferences.dart';
 
@@ -27,8 +28,12 @@ class _RiExportAppState extends State<RiExportApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthSession()),
         Provider<ApiClient>(
-          create: (_) => ApiClient(config: ApiConfig()),
+          create: (context) => ApiClient(
+            config: ApiConfig(),
+            tokenProvider: () => context.read<AuthSession>().accessToken,
+          ),
           dispose: (_, client) => client.close(),
         ),
         ChangeNotifierProvider(create: (_) => AppPreferences()),
@@ -49,6 +54,16 @@ class _RiExportView extends StatelessWidget {
       builder: (context, preferences, _) => MaterialApp.router(
         title: 'RiExport',
         themeMode: preferences.themeMode,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF193D35),
+            primary: const Color(0xFF193D35),
+            secondary: const Color(0xFFB86B43),
+            surface: const Color(0xFFF6F5F0),
+          ),
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+        ),
         routerConfig: router,
       ),
     );

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/api/api_client.dart';
+import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/state/auth_session.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
   static const login = '/login';
 }
 
-GoRouter createAppRouter({String initialLocation = AppRoutes.home}) {
+GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
@@ -18,7 +23,14 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.home}) {
       GoRoute(
         path: AppRoutes.login,
         name: 'login',
-        builder: (_, _) => const _RoutePlaceholder(title: 'Iniciar sesión'),
+        builder: (context, _) => LoginScreen(
+          onLogin: (email, password) =>
+              context.read<AuthSession>().authenticate(
+                context.read<ApiClient>(),
+                email: email,
+                password: password,
+              ),
+        ),
       ),
     ],
     errorBuilder: (_, state) => _RoutePlaceholder(
