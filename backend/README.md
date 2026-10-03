@@ -51,15 +51,17 @@ Consulta la revisión aplicada con `alembic current`, el historial con `alembic 
 
 ## Datos semilla
 
-El script `scripts.seed_data` inserta las unidades `kg` y `t` y las
-certificaciones base descritas en los requerimientos. Puede ejecutarse más de
+El script `scripts.seed_data` inserta las unidades `kg` y `t`, las
+certificaciones base y los cuatro roles iniciales (`administrador`,
+`usuario_comercial`, `encargado_logistico`, `cliente`). Puede ejecutarse más de
 una vez: inserta únicamente claves que todavía no existan y conserva los
-valores ya presentes.
+valores ya presentes. Para cargar solo los roles:
 
 ```powershell
-.\venv\Scripts\python.exe -m scripts.seed_data
+.\venv\Scripts\python.exe -m scripts.seed_data --roles-only
 ```
 
-El script requiere `DATABASE_URL` y no crea usuarios ni roles. La matriz de
-permisos, los países, las monedas y los nombres definitivos de roles aún deben
-aprobarse antes de añadirlos a esta semilla.
+El script requiere `DATABASE_URL` y no crea usuarios ni asigna permisos. El
+rol `cliente` se registra como catálogo, pero su aislamiento para consultar
+solo envíos propios debe implementarse antes de habilitar acceso externo. Los
+países, monedas y la matriz de permisos aún requieren definición.
