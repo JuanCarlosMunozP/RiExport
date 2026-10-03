@@ -7,6 +7,7 @@ audit/models.py
 audit/repository.py
 audit/service.py
 auth/__init__.py
+auth/dependencies.py
 auth/router.py
 auth/schemas.py
 auth/service.py
@@ -25,6 +26,8 @@ customers/schemas.py
 customers/service.py
 database/__init__.py
 database/base.py
+database/mixins.py
+database/models.py
 database/session.py
 documents/__init__.py
 documents/models.py
@@ -109,12 +112,18 @@ roles/repository.py
 roles/router.py
 roles/schemas.py
 roles/service.py
+scripts/__init__.py
+scripts/seed_data.py
 suppliers/__init__.py
 suppliers/models.py
 suppliers/repository.py
 suppliers/router.py
 suppliers/schemas.py
 suppliers/service.py
+tests/test_auth_dependencies.py
+tests/test_models.py
+tests/test_security.py
+tests/test_seed_data.py
 users/__init__.py
 users/models.py
 users/repository.py

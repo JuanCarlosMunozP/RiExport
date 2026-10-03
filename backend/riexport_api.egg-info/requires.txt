@@ -1,5 +1,6 @@
 alembic<2,>=1.20
 bcrypt<6,>=5
+email-validator>=2.3.0
 fastapi<1,>=0.141
 psycopg[binary]<4,>=3.3
 pydantic-settings<3,>=2.15

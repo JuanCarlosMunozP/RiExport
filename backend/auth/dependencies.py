@@ -4,11 +4,13 @@ from typing import Annotated
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from core.errors import APIError
 from core.security import InvalidAccessToken, decode_access_token
 from database.session import get_db
+from roles.models import Role, RolePermission
 from users.models import AppUser
 
 _bearer_scheme = HTTPBearer(auto_error=False)
@@ -48,3 +50,30 @@ def get_current_user(
 
 
 CurrentUser = Annotated[AppUser, Depends(get_current_user)]
+
+
+def require_permission(permission_code: str):
+    """Require an active user's active role to grant a specific permission."""
+
+    def permission_dependency(
+        current_user: CurrentUser,
+        session: Annotated[Session, Depends(get_db)],
+    ) -> AppUser:
+        permission = session.scalar(
+            select(RolePermission.permission_code)
+            .join(Role, Role.id == RolePermission.role_id)
+            .where(
+                RolePermission.role_id == current_user.role_id,
+                RolePermission.permission_code == permission_code,
+                Role.is_active.is_(True),
+            )
+        )
+        if permission is None:
+            raise APIError(
+                status_code=403,
+                code="FORBIDDEN",
+                message="No tienes permiso para esta operación.",
+            )
+        return current_user
+
+    return permission_dependency

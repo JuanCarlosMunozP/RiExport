@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+import database.models  # noqa: F401
 from api.router import router
 from core.config import settings
 from core.cors import configure_cors

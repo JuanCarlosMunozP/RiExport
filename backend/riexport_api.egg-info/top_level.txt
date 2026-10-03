@@ -17,5 +17,6 @@ payments
 products
 reports
 roles
+scripts
 suppliers
 users
