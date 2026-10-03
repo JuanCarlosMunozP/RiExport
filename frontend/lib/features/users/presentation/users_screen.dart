@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/api/api_exception.dart';
+import 'user_edit_dialog.dart';
 
 typedef LoadUsers =
     Future<Object?> Function({
@@ -14,9 +15,17 @@ typedef LoadUsers =
     });
 
 class UsersScreen extends StatefulWidget {
-  const UsersScreen({super.key, required this.loadUsers});
+  const UsersScreen({
+    super.key,
+    required this.loadUsers,
+    this.updateUser,
+    this.deactivateUser,
+  });
 
   final LoadUsers loadUsers;
+  final Future<void> Function(int userId, Map<String, Object?> changes)?
+  updateUser;
+  final Future<void> Function(int userId)? deactivateUser;
 
   @override
   State<UsersScreen> createState() => _UsersScreenState();
@@ -269,8 +278,84 @@ class _UsersScreenState extends State<UsersScreen> {
     ),
   );
 
-  Widget _buildUserList() =>
-      Column(children: [for (final user in _users) _UserRow(user: user)]);
+  Widget _buildUserList() => Column(
+    children: [
+      for (final user in _users)
+        _UserRow(
+          user: user,
+          onEdit: () => _editUser(user),
+          onDeactivate: () => _deactivateUser(user),
+        ),
+    ],
+  );
+
+  Future<void> _editUser(Map<String, dynamic> user) async {
+    final update = widget.updateUser;
+    final userId = user['id'];
+    if (update == null || userId is! int) return;
+    final saved = await showUserEditDialog(
+      context,
+      user: user,
+      onSave: (changes) => update(userId, changes),
+    );
+    if (!mounted || !saved) return;
+    await _loadUsers();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Usuario actualizado correctamente.')),
+      );
+    }
+  }
+
+  Future<void> _deactivateUser(Map<String, dynamic> user) async {
+    final deactivate = widget.deactivateUser;
+    final userId = user['id'];
+    if (deactivate == null || userId is! int) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Desactivar usuario'),
+        content: Text(
+          '¿Desactivar a ${user['first_name'] ?? ''} ${user['last_name'] ?? ''}? '
+          'No podrá iniciar sesión, pero su historial se conservará.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Desactivar'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+    try {
+      await deactivate(userId);
+      await _loadUsers();
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Usuario desactivado.')));
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No fue posible desactivar al usuario.'),
+          ),
+        );
+      }
+    }
+  }
 
   Widget _buildEmptyState() {
     final searched = _searchController.text.trim().isNotEmpty;
@@ -372,9 +457,15 @@ class _UserPage {
 }
 
 class _UserRow extends StatelessWidget {
-  const _UserRow({required this.user});
+  const _UserRow({
+    required this.user,
+    required this.onEdit,
+    required this.onDeactivate,
+  });
 
   final Map<String, dynamic> user;
+  final VoidCallback onEdit;
+  final VoidCallback onDeactivate;
 
   @override
   Widget build(BuildContext context) {
@@ -437,27 +528,62 @@ class _UserRow extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Container(
-            constraints: const BoxConstraints(minWidth: 68, minHeight: 26),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isActive
-                  ? const Color(0xFFE9F4EB)
-                  : const Color(0xFFF1EDEA),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              isActive ? 'Activo' : 'Inactivo',
-              style: TextStyle(
-                color: isActive
-                    ? const Color(0xFF245A3F)
-                    : const Color(0xFF785044),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                constraints: const BoxConstraints(minWidth: 68, minHeight: 26),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? const Color(0xFFE9F4EB)
+                      : const Color(0xFFF1EDEA),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  isActive ? 'Activo' : 'Inactivo',
+                  style: TextStyle(
+                    color: isActive
+                        ? const Color(0xFF245A3F)
+                        : const Color(0xFF785044),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
+              PopupMenuButton<String>(
+                tooltip: 'Acciones del usuario',
+                onSelected: (action) {
+                  if (action == 'edit') onEdit();
+                  if (action == 'deactivate') onDeactivate();
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text('Editar'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'deactivate',
+                    enabled: isActive,
+                    child: const ListTile(
+                      leading: Icon(Icons.person_off_outlined),
+                      title: Text('Desactivar'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+                child: const SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: Icon(Icons.more_vert_rounded),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -16,6 +16,30 @@ def get_role(session: Session, role_id: int) -> Role | None:
     return session.get(Role, role_id)
 
 
+def get_user(session: Session, user_id: int) -> AppUser | None:
+    return session.get(AppUser, user_id)
+
+
+def email_exists_for_other_user(session: Session, email: str, user_id: int) -> bool:
+    statement = select(AppUser.id).where(
+        func.lower(AppUser.email) == email,
+        AppUser.id != user_id,
+    )
+    return session.scalar(statement) is not None
+
+
+def count_active_users_with_role(session: Session, role_id: int) -> int:
+    statement = (
+        select(func.count())
+        .select_from(AppUser)
+        .where(
+            AppUser.role_id == role_id,
+            AppUser.is_active.is_(True),
+        )
+    )
+    return session.scalar(statement) or 0
+
+
 def add_user(session: Session, user: AppUser) -> AppUser:
     session.add(user)
     session.flush()

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.orm import Session
 
 from auth.dependencies import require_permission
@@ -9,6 +9,7 @@ from users import service
 from users.models import AppUser
 from users.schemas import (
     CreateUserRequest,
+    UpdateUserRequest,
     UserListResponse,
     UserResponse,
 )
@@ -47,3 +48,24 @@ def register_user(
     _authorized_user: Annotated[AppUser, Depends(require_permission("users.create"))],
 ) -> AppUser:
     return service.create_user(session, request)
+
+
+@router.patch("/{user_id}", response_model=UserResponse)
+def edit_user(
+    user_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    request: UpdateUserRequest,
+    session: Annotated[Session, Depends(get_db)],
+    _authorized_user: Annotated[AppUser, Depends(require_permission("users.update"))],
+) -> AppUser:
+    return service.update_user(session, user_id, request)
+
+
+@router.patch("/{user_id}/deactivate", response_model=UserResponse)
+def deactivate_user(
+    user_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    session: Annotated[Session, Depends(get_db)],
+    authorized_user: Annotated[
+        AppUser, Depends(require_permission("users.deactivate"))
+    ],
+) -> AppUser:
+    return service.deactivate_user(session, user_id, authorized_user.id)

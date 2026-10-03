@@ -75,6 +75,54 @@ void main() {
     expect(find.text('last@test.co'), findsOneWidget);
   });
 
+  testWidgets('edits and deactivates a user from the row actions', (
+    tester,
+  ) async {
+    Map<String, Object?>? updated;
+    var active = true;
+    var deactivationCalls = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: UsersScreen(
+          loadUsers:
+              ({required limit, required offset, query, isActive}) async =>
+                  _page([
+                    _user(5, 'ana@example.com', isActive: active),
+                  ], total: 1),
+          updateUser: (userId, changes) async {
+            expect(userId, 5);
+            updated = changes;
+          },
+          deactivateUser: (userId) async {
+            expect(userId, 5);
+            deactivationCalls++;
+            active = false;
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Acciones del usuario'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Editar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, 'Ana María');
+    await tester.tap(find.text('Guardar'));
+    await tester.pumpAndSettle();
+    expect(updated?['first_name'], 'Ana María');
+
+    await tester.tap(find.byTooltip('Acciones del usuario'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Desactivar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Desactivar'));
+    await tester.pumpAndSettle();
+
+    expect(deactivationCalls, 1);
+    expect(find.text('Inactivo'), findsOneWidget);
+  });
+
   testWidgets('shows an empty result message', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

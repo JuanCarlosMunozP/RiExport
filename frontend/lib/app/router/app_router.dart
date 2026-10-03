@@ -51,6 +51,15 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
         path: AppRoutes.users,
         name: 'users',
         builder: (context, _) => UsersScreen(
+          updateUser: (userId, changes) async {
+            await context.read<ApiClient>().patch(
+              '/users/$userId',
+              body: changes,
+            );
+          },
+          deactivateUser: (userId) async {
+            await context.read<ApiClient>().patch('/users/$userId/deactivate');
+          },
           loadUsers: ({required limit, required offset, query, isActive}) {
             final parameters = <String, String>{
               'limit': '$limit',
