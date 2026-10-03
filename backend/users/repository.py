@@ -12,6 +12,11 @@ def email_exists(session: Session, email: str) -> bool:
     return session.scalar(statement) is not None
 
 
+def get_user_by_email(session: Session, email: str) -> AppUser | None:
+    statement = select(AppUser).where(func.lower(AppUser.email) == email)
+    return session.scalar(statement)
+
+
 def get_role(session: Session, role_id: int) -> Role | None:
     return session.get(Role, role_id)
 

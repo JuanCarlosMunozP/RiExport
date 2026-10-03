@@ -36,15 +36,16 @@ Desde `D:\riexport\backend`:
 
 El backend usa siempre el puerto `8001`: OpenAPI/Swagger está en `http://127.0.0.1:8001/docs` en `development` y `testing`; en `production` la documentación interactiva y el esquema OpenAPI quedan deshabilitados. El estado de vida está en `/health/live` y la disponibilidad de base de datos en `/health/ready`.
 
-Los routers de dominio están registrados bajo `/api/v1`; todavía no exponen operaciones de negocio. Los modelos, servicios y repositorios se implementarán por actividad siguiendo el contrato REST documentado.
+Los routers de dominio están registrados bajo `/api/v1`. Autenticación,
+administración de usuarios y roles exponen las operaciones implementadas hasta
+el momento; las demás operaciones de negocio se incorporarán por actividad.
 
 ## Hash de contraseñas
 
 `core.security.hash_password` genera hashes bcrypt con salt aleatorio y costo
 12; `verify_password` compara credenciales sin revelar hashes inválidos. Las
 contraseñas se limitan a 72 bytes UTF-8, el máximo admitido por bcrypt, y se
-rechazan bytes nulos. Estas funciones no implican que el login o la gestión de
-sesiones estén implementados.
+rechazan bytes nulos.
 
 El mismo módulo expone `create_access_token` y `decode_access_token`. Los JWT
 usan HS256, requieren `sub`, `iat`, `exp`, `iss`, `jti` y `token_use=access`, y
@@ -55,11 +56,12 @@ por defecto es 30 minutos y se ajusta con `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`; es
 un valor inicial pendiente de aprobación. Un secreto ausente o débil bloquea
 la emisión de tokens.
 
-Las rutas protegidas pueden inyectar `CurrentUser` desde `auth.dependencies`;
-esta dependencia valida el Bearer JWT, busca el usuario por `sub` y rechaza
-cuentas inactivas. También se puede declarar explícitamente
-`Depends(get_current_user)`. La autorización por permisos se agregará en una
-dependencia separada.
+`POST /api/v1/auth/login` recibe `email` y `password`, verifica la contraseña,
+rechaza de forma uniforme credenciales incorrectas y cuentas inactivas, y
+responde con `access_token`, `token_type` y `expires_in`. Las rutas protegidas
+inyectan `CurrentUser`, que valida el Bearer JWT y vuelve a comprobar en la base
+que la cuenta siga activa. `require_permission` aplica los permisos asignados al
+rol activo en cada solicitud.
 
 ## Versionado de base de datos
 

@@ -15,6 +15,7 @@ from core.config import settings
 from core.errors import install_exception_handlers
 from core.security import create_access_token
 from database.session import get_db
+from roles.router import router as roles_router
 from users.router import router as users_router
 
 
@@ -31,6 +32,7 @@ def auth_settings(monkeypatch: pytest.MonkeyPatch) -> None:
 def _test_app(session: Mock) -> FastAPI:
     app = FastAPI()
     app.include_router(users_router, prefix="/api/v1")
+    app.include_router(roles_router, prefix="/api/v1")
 
     def override_get_db():
         yield session
@@ -45,6 +47,7 @@ def _get_json(
     query_parameters: dict[str, str],
     *,
     token: str | None = None,
+    path: str = "/api/v1/users",
 ) -> tuple[int, bytes]:
     messages: list[dict[str, object]] = []
     query_string = urlencode(query_parameters).encode()
@@ -57,8 +60,8 @@ def _get_json(
         "http_version": "1.1",
         "method": "GET",
         "scheme": "http",
-        "path": "/api/v1/users",
-        "raw_path": b"/api/v1/users",
+        "path": path,
+        "raw_path": path.encode(),
         "query_string": query_string,
         "root_path": "",
         "headers": headers,
@@ -82,6 +85,61 @@ def _get_json(
         if message["type"] == "http.response.body"
     )
     return start["status"], body
+
+
+@pytest.mark.parametrize(
+    ("user_id", "path", "expected_status"),
+    [
+        (1, "/api/v1/users", 200),
+        (1, "/api/v1/roles", 200),
+        (2, "/api/v1/users", 200),
+        (2, "/api/v1/roles", 403),
+        (3, "/api/v1/users", 403),
+        (3, "/api/v1/roles", 403),
+    ],
+)
+def test_access_is_granted_by_role_permission_assignments(
+    auth_settings: None,
+    user_id: int,
+    path: str,
+    expected_status: int,
+) -> None:
+    grants = {
+        1: {"users.read", "roles.read"},
+        2: {"users.read"},
+        3: set(),
+    }
+    users = {
+        1: SimpleNamespace(id=1, role_id=1, is_active=True),
+        2: SimpleNamespace(id=2, role_id=2, is_active=True),
+        3: SimpleNamespace(id=3, role_id=3, is_active=True),
+    }
+    session = Mock()
+    session.get.side_effect = lambda _model, identifier: users.get(identifier)
+    session.scalar.side_effect = lambda statement: _resolve_permission(
+        statement, grants
+    )
+    session.scalars.return_value.all.return_value = []
+
+    status_code, body = _get_json(
+        _test_app(session),
+        {},
+        token=create_access_token(user_id),
+        path=path,
+    )
+
+    assert status_code == expected_status
+    if expected_status == 403:
+        assert b'"code":"FORBIDDEN"' in body
+
+
+def _resolve_permission(statement, grants: dict[int, set[str]]) -> str | int | None:
+    params = statement.compile().params
+    permission_code = params.get("permission_code_1")
+    if permission_code is not None:
+        role_id = params["role_id_1"]
+        return permission_code if permission_code in grants[role_id] else None
+    return 0
 
 
 def _user(user_id: int, email: str, *, is_active: bool = True):
