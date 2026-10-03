@@ -1,6 +1,6 @@
 # RiExport Flutter
 
-Cliente Flutter de RiExport para Android, iOS y Web. La estructura de `lib/` sigue la arquitectura modular descrita en la documentación del proyecto. Las features aún no contienen funcionalidad de negocio.
+Cliente Flutter de RiExport para Android, iOS y Web. La estructura de `lib/` sigue la arquitectura modular descrita en la documentación del proyecto. Incluye autenticación y el formulario de registro de usuarios.
 
 El estado compartido se gestiona con `provider` y `ChangeNotifier`; cada feature mantendrá sus propios notifiers/estados. Usa `setState` para estado efímero limitado a un widget. La sesión se restaura al iniciar y conserva solo el token de acceso en almacenamiento seguro del dispositivo.
 
@@ -52,6 +52,7 @@ desde este dispositivo, y el backend conserva la validación de expiración.
 La navegación declarativa con `go_router` está centralizada en
 `lib/app/router/app_router.dart`. Una sesión restaurada abre `/` y una sesión
 ausente o vencida abre `/login`; rutas desconocidas muestran una página 404.
-El enrutador sincroniza la ubicación web con la URL y permite abrir rutas
-directamente. Las pantallas de negocio se incorporarán al implementar cada
-feature, sin definir rutas vacías por adelantado.
+Desde Inicio se accede a `/users/new`, que envía los datos a `POST /users` y
+requiere el permiso `users.create`. Hasta que esté disponible la consulta de
+roles, el formulario recibe el ID de un rol activo. El enrutador sincroniza la
+ubicación web con la URL y permite abrir rutas directamente.

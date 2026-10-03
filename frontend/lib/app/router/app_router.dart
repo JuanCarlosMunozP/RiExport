@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/state/auth_session.dart';
+import '../../features/users/presentation/user_registration_screen.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
   static const login = '/login';
+  static const userRegistration = '/users/new';
 }
 
 GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
@@ -32,6 +34,15 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
                 email: email,
                 password: password,
               ),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.userRegistration,
+        name: 'user-registration',
+        builder: (context, _) => UserRegistrationScreen(
+          onRegister: (request) async {
+            await context.read<ApiClient>().post('/users', body: request);
+          },
         ),
       ),
     ],
@@ -107,6 +118,19 @@ class _HomePlaceholderState extends State<_HomePlaceholder> {
         const SizedBox(width: 8),
       ],
     ),
-    body: const Center(child: Text('Inicio')),
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Inicio'),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: () => context.go(AppRoutes.userRegistration),
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            label: const Text('Registrar usuario'),
+          ),
+        ],
+      ),
+    ),
   );
 }

@@ -52,6 +52,9 @@ void main() {
     GoRouter.of(scaffoldContext).go(AppRoutes.home);
     await tester.pumpAndSettle();
     expect(find.text('Inicio'), findsNWidgets(2));
+    await tester.tap(find.text('Registrar usuario'));
+    await tester.pumpAndSettle();
+    expect(find.text('Registrar usuario'), findsOneWidget);
     Provider.of<AppPreferences>(
       context,
       listen: false,
