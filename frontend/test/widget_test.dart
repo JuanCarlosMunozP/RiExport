@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:riexport_app/app/app.dart';
+import 'package:riexport_app/app/router/app_router.dart';
 import 'package:riexport_app/app/state/app_preferences.dart';
 import 'package:riexport_app/core/api/api_client.dart';
 
@@ -10,6 +12,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(const RiExportApp());
+    await tester.pumpAndSettle();
 
     var app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.themeMode, ThemeMode.system);
@@ -19,6 +22,12 @@ void main() {
       Provider.of<ApiClient>(context, listen: false).config.baseUri.toString(),
       'http://127.0.0.1:8001/api/v1',
     );
+    expect(find.text('Inicio'), findsNWidgets(2));
+
+    final scaffoldContext = tester.element(find.byType(Scaffold));
+    GoRouter.of(scaffoldContext).go(AppRoutes.login);
+    await tester.pumpAndSettle();
+    expect(find.text('Iniciar sesión'), findsNWidgets(2));
     Provider.of<AppPreferences>(
       context,
       listen: false,

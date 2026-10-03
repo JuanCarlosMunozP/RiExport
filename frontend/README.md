@@ -40,3 +40,12 @@ error del contrato (`error.code`, `message`, `details` y `request_id`), agrega
 `X-Request-ID`, aplica un timeout y no expone el cuerpo crudo de errores HTTP.
 El token se conecta mediante `tokenProvider`; la autenticación y persistencia
 de credenciales aún no están implementadas.
+
+## Navegación
+
+La navegación declarativa con `go_router` está centralizada en
+`lib/app/router/app_router.dart`. Las rutas iniciales son `/` (inicio) y
+`/login` (marcador de posición); rutas desconocidas muestran una página 404.
+El enrutador sincroniza la ubicación web con la URL y permite abrir rutas
+directamente. Las pantallas de negocio se incorporarán al implementar cada
+feature, sin definir rutas vacías por adelantado.
