@@ -81,10 +81,15 @@ class AuthSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> clear() async {
+  Future<bool> clear() async {
     _accessToken = null;
     notifyListeners();
-    await _tokenStore.deleteToken();
+    try {
+      await _tokenStore.deleteToken();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   bool _isNotExpiredJwt(String token) {

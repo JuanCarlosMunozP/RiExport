@@ -43,6 +43,9 @@ con `flutter_secure_storage` (Keychain en Apple, almacenamiento cifrado en
 Android y Web Crypto en navegador), lo restaura al iniciar y elimina los tokens
 vencidos. No se guardan contraseñas. En Web, el almacenamiento seguro requiere
 HTTPS o `localhost`; no publiques la app en HTTP sin TLS.
+Al cerrar sesión se elimina el JWT local y se vuelve a `/login`. El contrato
+actual no define revocación de JWT en el servidor; el token deja de enviarse
+desde este dispositivo, y el backend conserva la validación de expiración.
 
 ## Navegación
 

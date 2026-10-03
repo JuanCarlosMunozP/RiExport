@@ -12,16 +12,20 @@ import 'dart:convert';
 class _MemoryTokenStore implements SessionTokenStore {
   _MemoryTokenStore({this.value});
 
-  final String? value;
+  String? value;
+  int deleteCount = 0;
 
   @override
   Future<String?> readToken() async => value;
 
   @override
-  Future<void> writeToken(String token) async {}
+  Future<void> writeToken(String token) async => value = token;
 
   @override
-  Future<void> deleteToken() async {}
+  Future<void> deleteToken() async {
+    value = null;
+    deleteCount++;
+  }
 }
 
 void main() {
@@ -61,9 +65,9 @@ void main() {
 
   testWidgets('opens the home route for a restored session', (tester) async {
     final token = _jwt(DateTime.now().add(const Duration(minutes: 5)));
-    final authSession = AuthSession(
-      tokenStore: _MemoryTokenStore(value: token),
-    );
+    final store = _MemoryTokenStore(value: token);
+    final authSession = AuthSession(tokenStore: store);
+    addTearDown(authSession.dispose);
     await authSession.restore();
 
     await tester.pumpWidget(RiExportApp(authSession: authSession));
@@ -71,6 +75,29 @@ void main() {
 
     expect(find.text('Inicio'), findsNWidgets(2));
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('logout clears persisted token and returns to login', (
+    tester,
+  ) async {
+    final store = _MemoryTokenStore(
+      value: _jwt(DateTime.now().add(const Duration(minutes: 5))),
+    );
+    final authSession = AuthSession(tokenStore: store);
+    addTearDown(authSession.dispose);
+    await authSession.restore();
+
+    await tester.pumpWidget(RiExportApp(authSession: authSession));
+    await tester.pumpAndSettle();
+    expect(find.text('Inicio'), findsNWidgets(2));
+
+    await tester.tap(find.byTooltip('Cerrar sesión'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bienvenido'), findsOneWidget);
+    expect(authSession.isAuthenticated, isFalse);
+    expect(store.value, isNull);
+    expect(store.deleteCount, 1);
   });
 }
 

@@ -18,7 +18,9 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (_, _) => const _RoutePlaceholder(title: 'Inicio'),
+        builder: (context, _) => _HomePlaceholder(
+          onLogout: () => context.read<AuthSession>().clear(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -53,4 +55,58 @@ class _RoutePlaceholder extends StatelessWidget {
       body: Center(child: Text(message ?? title)),
     );
   }
+}
+
+class _HomePlaceholder extends StatefulWidget {
+  const _HomePlaceholder({required this.onLogout});
+
+  final Future<bool> Function() onLogout;
+
+  @override
+  State<_HomePlaceholder> createState() => _HomePlaceholderState();
+}
+
+class _HomePlaceholderState extends State<_HomePlaceholder> {
+  bool _isSigningOut = false;
+
+  Future<void> _signOut() async {
+    setState(() => _isSigningOut = true);
+    final messenger = ScaffoldMessenger.of(context);
+    var tokenRemoved = false;
+    try {
+      tokenRemoved = await widget.onLogout();
+    } finally {
+      if (mounted) context.go(AppRoutes.login);
+    }
+    if (!tokenRemoved) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'La sesión se cerró, pero no se pudo borrar el token guardado.',
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Inicio'),
+      actions: [
+        IconButton(
+          tooltip: 'Cerrar sesión',
+          onPressed: _isSigningOut ? null : _signOut,
+          icon: _isSigningOut
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.logout_rounded),
+        ),
+        const SizedBox(width: 8),
+      ],
+    ),
+    body: const Center(child: Text('Inicio')),
+  );
 }
