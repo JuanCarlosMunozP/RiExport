@@ -46,6 +46,15 @@ contraseñas se limitan a 72 bytes UTF-8, el máximo admitido por bcrypt, y se
 rechazan bytes nulos. Estas funciones no implican que el login o la gestión de
 sesiones estén implementados.
 
+El mismo módulo expone `create_access_token` y `decode_access_token`. Los JWT
+usan HS256, requieren `sub`, `iat`, `exp`, `iss`, `jti` y `token_use=access`, y
+no incluyen roles ni permisos. Configura `JWT_SECRET_KEY` con al menos 32 bytes
+aleatorios (por ejemplo, genera uno con
+`python -c "import secrets; print(secrets.token_urlsafe(48))"`). El vencimiento
+por defecto es 30 minutos y se ajusta con `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`; es
+un valor inicial pendiente de aprobación. Un secreto ausente o débil bloquea
+la emisión de tokens.
+
 ## Versionado de base de datos
 
 Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa `database.models`, el registro de todos los modelos ORM de dominio, para detectar entidades al autogenerar revisiones:

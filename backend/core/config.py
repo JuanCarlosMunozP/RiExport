@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     cors_origins: str = ""
     cors_allow_credentials: bool = False
     database_url: SecretStr | None = None
+    jwt_secret_key: SecretStr | None = None
+    jwt_access_token_expire_minutes: int = Field(default=30, gt=0)
+    jwt_issuer: str = Field(default="riexport-api", min_length=1)
 
     @property
     def debug(self) -> bool:
@@ -32,7 +35,9 @@ class Settings(BaseSettings):
 
     @property
     def cors_allowed_origins(self) -> list[str]:
-        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
     @property
     def cors_origin_regex(self) -> str | None:
