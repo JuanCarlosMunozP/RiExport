@@ -55,6 +55,11 @@ por defecto es 30 minutos y se ajusta con `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`; es
 un valor inicial pendiente de aprobación. Un secreto ausente o débil bloquea
 la emisión de tokens.
 
+Las rutas protegidas pueden declarar `Depends(get_current_user)` desde
+`auth.dependencies`; esta dependencia valida el Bearer JWT, busca el usuario
+por `sub` y rechaza cuentas inactivas. La autorización por permisos se agregará
+en una dependencia separada.
+
 ## Versionado de base de datos
 
 Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa `database.models`, el registro de todos los modelos ORM de dominio, para detectar entidades al autogenerar revisiones:
