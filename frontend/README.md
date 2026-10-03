@@ -56,6 +56,9 @@ Desde Inicio se accede a `/users` para consultar, buscar y paginar usuarios
 (permiso `users.read`) y a `/users/new` para registrarlos (permiso
 `users.create`). La edición se abre en `/users/:userId/edit` desde las acciones
 del listado y requiere `users.update`; la desactivación requiere
-`users.deactivate`. Hasta que esté disponible la consulta de roles, los
-formularios reciben el ID de un rol activo. El enrutador sincroniza la ubicación
-web con la URL y permite abrir rutas directamente.
+`users.deactivate`. `/roles` permite crear y editar roles, consultar el
+catálogo y asignar permisos (`roles.read`, `roles.create`, `roles.update`,
+`roles.permissions.update`); la desactivación requiere `roles.deactivate`.
+Hasta que esté disponible un selector de roles, el formulario de alta de usuario
+recibe el ID de un rol activo. El enrutador sincroniza la ubicación web con la
+URL y permite abrir rutas directamente.

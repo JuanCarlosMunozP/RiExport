@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/state/auth_session.dart';
+import '../../features/roles/presentation/roles_screen.dart';
 import '../../features/users/presentation/user_registration_screen.dart';
 import '../../features/users/presentation/user_edit_screen.dart';
 import '../../features/users/presentation/users_screen.dart';
@@ -14,6 +15,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const userRegistration = '/users/new';
   static const users = '/users';
+  static const roles = '/roles';
 }
 
 GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
@@ -67,6 +69,29 @@ GoRouter createAppRouter({String initialLocation = AppRoutes.login}) {
               queryParameters: parameters,
             );
           },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.roles,
+        name: 'roles',
+        builder: (context, _) => RolesScreen(
+          loadRoles: () => context.read<ApiClient>().get(
+            '/roles',
+            queryParameters: const {'include_inactive': 'true'},
+          ),
+          loadPermissions: () =>
+              context.read<ApiClient>().get('/roles/permissions'),
+          createRole: (request) =>
+              context.read<ApiClient>().post('/roles', body: request),
+          updateRole: (roleId, changes) =>
+              context.read<ApiClient>().patch('/roles/$roleId', body: changes),
+          setRolePermissions: (roleId, permissionCodes) =>
+              context.read<ApiClient>().put(
+                '/roles/$roleId/permissions',
+                body: {'permission_codes': permissionCodes},
+              ),
+          deactivateRole: (roleId) =>
+              context.read<ApiClient>().patch('/roles/$roleId/deactivate'),
         ),
       ),
       GoRoute(
@@ -181,6 +206,12 @@ class _HomePlaceholderState extends State<_HomePlaceholder> {
             onPressed: () => context.go(AppRoutes.users),
             icon: const Icon(Icons.manage_search_rounded),
             label: const Text('Consultar usuarios'),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: () => context.go(AppRoutes.roles),
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            label: const Text('Administrar roles y permisos'),
           ),
         ],
       ),

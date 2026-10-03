@@ -4,13 +4,14 @@ import argparse
 from collections.abc import Sequence
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 import database.models  # noqa: F401
 from database.session import get_session_factory
 from products.models import Certification, UnitOfMeasure
-from roles.models import Role
+from roles.models import Permission, Role, RolePermission
 
 UNITS: Sequence[dict[str, Any]] = (
     {"code": "kg", "name": "Kilogramo"},
@@ -42,6 +43,23 @@ ROLES: Sequence[dict[str, Any]] = (
     },
 )
 
+PERMISSIONS: Sequence[dict[str, str]] = (
+    {"code": "roles.read", "description": "Consultar roles y permisos."},
+    {"code": "roles.create", "description": "Crear roles."},
+    {"code": "roles.update", "description": "Editar roles."},
+    {
+        "code": "roles.permissions.update",
+        "description": "Asignar permisos a roles.",
+    },
+    {"code": "roles.deactivate", "description": "Desactivar roles."},
+    {"code": "users.read", "description": "Consultar usuarios."},
+    {"code": "users.create", "description": "Registrar usuarios."},
+    {"code": "users.update", "description": "Editar usuarios."},
+    {"code": "users.deactivate", "description": "Desactivar usuarios."},
+)
+
+ADMIN_PERMISSION_CODES = tuple(permission["code"] for permission in PERMISSIONS)
+
 
 def _insert_missing(
     session: Session,
@@ -61,12 +79,13 @@ def _insert_missing(
 
 def seed_reference_data(session: Session) -> dict[str, int]:
     """Insert missing reference rows without updating existing catalog values."""
+    security = seed_security_catalog(session)
     return {
         "unit_of_measure": _insert_missing(session, UnitOfMeasure, UNITS, ("code",)),
         "certification": _insert_missing(
             session, Certification, CERTIFICATIONS, ("code",)
         ),
-        "role": seed_roles(session),
+        **security,
     }
 
 
@@ -75,19 +94,43 @@ def seed_roles(session: Session) -> int:
     return _insert_missing(session, Role, ROLES, ("name",))
 
 
+def seed_security_catalog(session: Session) -> dict[str, int]:
+    roles = seed_roles(session)
+    permissions = _insert_missing(session, Permission, PERMISSIONS, ("code",))
+    role_id = session.scalar(select(Role.id).where(Role.name == "administrador"))
+    assignments = 0
+    if role_id is not None:
+        rows = [
+            {"role_id": role_id, "permission_code": code}
+            for code in ADMIN_PERMISSION_CODES
+        ]
+        statement = (
+            insert(RolePermission)
+            .values(rows)
+            .on_conflict_do_nothing(index_elements=["role_id", "permission_code"])
+            .returning(*RolePermission.__table__.primary_key.columns)
+        )
+        assignments = len(session.execute(statement).all())
+    return {
+        "role": roles,
+        "permission": permissions,
+        "role_permission": assignments,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Carga datos de referencia RiExport.")
     parser.add_argument(
         "--roles-only",
         action="store_true",
-        help="Inserta únicamente los roles del sistema.",
+        help="Inserta roles, permisos del sistema y permisos administrativos.",
     )
     args = parser.parse_args()
 
     session_factory = get_session_factory()
     with session_factory.begin() as session:
         inserted = (
-            {"role": seed_roles(session)}
+            seed_security_catalog(session)
             if args.roles_only
             else seed_reference_data(session)
         )
