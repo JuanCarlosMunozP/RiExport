@@ -63,6 +63,11 @@ inyectan `CurrentUser`, que valida el Bearer JWT y vuelve a comprobar en la base
 que la cuenta siga activa. `require_permission` aplica los permisos asignados al
 rol activo en cada solicitud.
 
+`POST /api/v1/auth/password-reset/request` recibe `email` y crea una solicitud
+de recuperación con token de un solo uso, almacenando únicamente su hash y con
+vencimiento de 30 minutos. La respuesta no revela si la cuenta existe. El envío
+del enlace requiere integrar y configurar un proveedor de correo.
+
 ## Versionado de base de datos
 
 Alembic carga `DATABASE_URL` desde `.env`, usa `database.base.Base.metadata` e importa `database.models`, el registro de todos los modelos ORM de dominio, para detectar entidades al autogenerar revisiones:
