@@ -2,7 +2,7 @@
 
 Cliente Flutter de RiExport para Android, iOS y Web. La estructura de `lib/` sigue la arquitectura modular descrita en la documentación del proyecto. Las features aún no contienen funcionalidad de negocio.
 
-El estado compartido se gestiona con `provider` y `ChangeNotifier`; cada feature mantendrá sus propios notifiers/estados. Usa `setState` para estado efímero limitado a un widget. La preferencia de tema es el único estado global de ejemplo por ahora.
+El estado compartido se gestiona con `provider` y `ChangeNotifier`; cada feature mantendrá sus propios notifiers/estados. Usa `setState` para estado efímero limitado a un widget. La sesión se restaura al iniciar y conserva solo el token de acceso en almacenamiento seguro del dispositivo.
 
 ## Ejecutar
 
@@ -38,14 +38,17 @@ físico se debe usar la dirección LAN del equipo que ejecuta el backend; en
 despliegues se debe configurar una URL HTTPS. El cliente procesa el formato de
 error del contrato (`error.code`, `message`, `details` y `request_id`), agrega
 `X-Request-ID`, aplica un timeout y no expone el cuerpo crudo de errores HTTP.
-El token se conecta mediante `tokenProvider`; la autenticación y persistencia
-de credenciales aún no están implementadas.
+El token se conecta mediante `tokenProvider`. La app guarda el JWT de acceso
+con `flutter_secure_storage` (Keychain en Apple, almacenamiento cifrado en
+Android y Web Crypto en navegador), lo restaura al iniciar y elimina los tokens
+vencidos. No se guardan contraseñas. En Web, el almacenamiento seguro requiere
+HTTPS o `localhost`; no publiques la app en HTTP sin TLS.
 
 ## Navegación
 
 La navegación declarativa con `go_router` está centralizada en
-`lib/app/router/app_router.dart`. Las rutas iniciales son `/` (inicio) y
-`/login` (marcador de posición); rutas desconocidas muestran una página 404.
+`lib/app/router/app_router.dart`. Una sesión restaurada abre `/` y una sesión
+ausente o vencida abre `/login`; rutas desconocidas muestran una página 404.
 El enrutador sincroniza la ubicación web con la URL y permite abrir rutas
 directamente. Las pantallas de negocio se incorporarán al implementar cada
 feature, sin definir rutas vacías por adelantado.

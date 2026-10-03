@@ -6,12 +6,31 @@ import 'package:riexport_app/app/app.dart';
 import 'package:riexport_app/app/router/app_router.dart';
 import 'package:riexport_app/app/state/app_preferences.dart';
 import 'package:riexport_app/core/api/api_client.dart';
+import 'package:riexport_app/features/auth/state/auth_session.dart';
+import 'dart:convert';
+
+class _MemoryTokenStore implements SessionTokenStore {
+  _MemoryTokenStore({this.value});
+
+  final String? value;
+
+  @override
+  Future<String?> readToken() async => value;
+
+  @override
+  Future<void> writeToken(String token) async {}
+
+  @override
+  Future<void> deleteToken() async {}
+}
 
 void main() {
   testWidgets('provides app preferences and updates the theme mode', (
     tester,
   ) async {
-    await tester.pumpWidget(const RiExportApp());
+    await tester.pumpWidget(
+      RiExportApp(authSession: AuthSession(tokenStore: _MemoryTokenStore())),
+    );
     await tester.pumpAndSettle();
 
     var app = tester.widget<MaterialApp>(find.byType(MaterialApp));
@@ -39,4 +58,26 @@ void main() {
     expect(app.themeMode, ThemeMode.dark);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets('opens the home route for a restored session', (tester) async {
+    final token = _jwt(DateTime.now().add(const Duration(minutes: 5)));
+    final authSession = AuthSession(
+      tokenStore: _MemoryTokenStore(value: token),
+    );
+    await authSession.restore();
+
+    await tester.pumpWidget(RiExportApp(authSession: authSession));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inicio'), findsNWidgets(2));
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+}
+
+String _jwt(DateTime expiry) {
+  final header = base64Url.encode(utf8.encode('{"alg":"none"}'));
+  final payload = base64Url.encode(
+    utf8.encode('{"exp":${expiry.millisecondsSinceEpoch ~/ 1000}}'),
+  );
+  return '$header.$payload.signature';
 }

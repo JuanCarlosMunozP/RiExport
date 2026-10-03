@@ -9,14 +9,20 @@ import 'router/app_router.dart';
 import 'state/app_preferences.dart';
 
 class RiExportApp extends StatefulWidget {
-  const RiExportApp({super.key});
+  const RiExportApp({super.key, required this.authSession});
+
+  final AuthSession authSession;
 
   @override
   State<RiExportApp> createState() => _RiExportAppState();
 }
 
 class _RiExportAppState extends State<RiExportApp> {
-  late final GoRouter _router = createAppRouter();
+  late final GoRouter _router = createAppRouter(
+    initialLocation: widget.authSession.isAuthenticated
+        ? AppRoutes.home
+        : AppRoutes.login,
+  );
 
   @override
   void dispose() {
@@ -28,7 +34,7 @@ class _RiExportAppState extends State<RiExportApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthSession()),
+        ChangeNotifierProvider.value(value: widget.authSession),
         Provider<ApiClient>(
           create: (context) => ApiClient(
             config: ApiConfig(),
