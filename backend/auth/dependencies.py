@@ -45,3 +45,6 @@ def get_current_user(
     if user is None or not user.is_active:
         raise _authentication_error()
     return user
+
+
+CurrentUser = Annotated[AppUser, Depends(get_current_user)]

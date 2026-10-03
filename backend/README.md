@@ -55,10 +55,11 @@ por defecto es 30 minutos y se ajusta con `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`; es
 un valor inicial pendiente de aprobación. Un secreto ausente o débil bloquea
 la emisión de tokens.
 
-Las rutas protegidas pueden declarar `Depends(get_current_user)` desde
-`auth.dependencies`; esta dependencia valida el Bearer JWT, busca el usuario
-por `sub` y rechaza cuentas inactivas. La autorización por permisos se agregará
-en una dependencia separada.
+Las rutas protegidas pueden inyectar `CurrentUser` desde `auth.dependencies`;
+esta dependencia valida el Bearer JWT, busca el usuario por `sub` y rechaza
+cuentas inactivas. También se puede declarar explícitamente
+`Depends(get_current_user)`. La autorización por permisos se agregará en una
+dependencia separada.
 
 ## Versionado de base de datos
 
